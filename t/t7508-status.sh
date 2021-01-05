@@ -1657,6 +1657,17 @@ test_expect_success '--no-lock-index prevents index update and is deprecated' '
 	! grep ^1234567890 out
 '
 
+test_expect_success '--no-lock-index prevents index update and is deprecated' '
+	test-tool chmtime =1234567890 .git/index &&
+	git status --no-lock-index 2>err &&
+	grep "no-lock-index is deprecated" err &&
+	test-tool chmtime -v +0 .git/index >out &&
+	grep ^1234567890 out &&
+	git status &&
+	test-tool chmtime -v +0 .git/index >out &&
+	! grep ^1234567890 out
+'
+
 test_expect_success '--no-optional-locks prevents index update' '
 	test-tool chmtime =1234567890 .git/index &&
 	git --no-optional-locks status &&
