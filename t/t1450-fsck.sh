@@ -3,10 +3,16 @@
 test_description='git fsck random collection of tests
 
 * (HEAD) B
-* (master) A
+* (main) A
 '
 
 . ./test-lib.sh
+
+if test_have_prereq REFTABLE
+then
+  skip_all='skipping tests; incompatible with reftable'
+  test_done
+fi
 
 test_expect_success setup '
 	git config gc.auto 0 &&
@@ -301,7 +307,7 @@ test_expect_success 'unparseable tree object' '
 	test_must_fail git fsck 2>out &&
 	test_i18ngrep "error: empty filename in tree entry" out &&
 	test_i18ngrep "$tree_sha1" out &&
-	test_i18ngrep ! "fatal: empty filename in tree entry" out
+	! grep "fatal: empty filename in tree entry" out
 '
 
 test_expect_success 'tree entry with type mismatch' '
@@ -319,7 +325,7 @@ test_expect_success 'tree entry with type mismatch' '
 	git update-ref refs/heads/type_mismatch $commit &&
 	test_must_fail git fsck >out 2>&1 &&
 	test_i18ngrep "is a blob, not a tree" out &&
-	test_i18ngrep ! "dangling blob" out
+	! grep "dangling blob" out
 '
 
 test_expect_success 'tag pointing to nonexistent' '

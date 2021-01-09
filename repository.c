@@ -170,9 +170,12 @@ int repo_init(struct repository *repo,
 		goto error;
 
 	repo_set_hash_algo(repo, format.hash_algo);
+	repo->worktree_config_extension = format.worktree_config;
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
+
+	repo->ref_storage_format = xstrdup_or_null(format.ref_storage);
 
 	clear_repository_format(&format);
 	return 0;

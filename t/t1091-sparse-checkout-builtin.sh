@@ -2,6 +2,9 @@
 
 test_description='sparse checkout builtin tests'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 list_files() {
@@ -117,7 +120,7 @@ test_expect_success 'interaction with clone --no-checkout (unborn index)' '
 	test_path_is_missing clone_no_checkout/.git/index &&
 
 	# No branch is checked out until we manually switch to one
-	git -C clone_no_checkout switch master &&
+	git -C clone_no_checkout switch main &&
 	test_path_is_file clone_no_checkout/.git/index &&
 	check_files clone_no_checkout a folder1
 '
@@ -180,7 +183,7 @@ test_expect_success 'cone mode: match patterns' '
 	git -C repo config --worktree core.sparseCheckoutCone true &&
 	rm -rf repo/a repo/folder1 repo/folder2 &&
 	git -C repo read-tree -mu HEAD 2>err &&
-	test_i18ngrep ! "disabling cone patterns" err &&
+	! grep "disabling cone patterns" err &&
 	git -C repo reset --hard &&
 	check_files repo a folder1 folder2
 '
@@ -323,8 +326,8 @@ test_expect_success 'revert to old sparse-checkout on empty update' '
 		git add file &&
 		git commit -m "test" &&
 		git sparse-checkout set nothing 2>err &&
-		test_i18ngrep ! "Sparse checkout leaves no entry on working directory" err &&
-		test_i18ngrep ! ".git/index.lock" err &&
+		! grep "Sparse checkout leaves no entry on working directory" err &&
+		! grep ".git/index.lock" err &&
 		git sparse-checkout set file
 	)
 '
@@ -340,7 +343,7 @@ test_expect_success '.gitignore should not warn about cone mode' '
 	git -C repo config --worktree core.sparseCheckoutCone true &&
 	echo "**/bin/*" >repo/.gitignore &&
 	git -C repo reset --hard 2>err &&
-	test_i18ngrep ! "disabling cone patterns" err
+	! grep "disabling cone patterns" err
 '
 
 test_expect_success 'sparse-checkout (init|set|disable) warns with dirty status' '
@@ -417,7 +420,7 @@ test_expect_success 'sparse-checkout reapply' '
 
 	git -C tweak checkout HEAD deep/deeper2/a &&
 	git -C tweak sparse-checkout reapply 2>err &&
-	test_i18ngrep ! "warning.*The following paths are not up to date" err &&
+	! grep "warning.*The following paths are not up to date" err &&
 	test_path_is_missing tweak/deep/deeper2/a &&
 	test_i18ngrep "warning.*The following paths are unmerged" err &&
 	test_path_is_file tweak/folder1/a &&

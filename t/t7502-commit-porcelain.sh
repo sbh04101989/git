@@ -2,6 +2,9 @@
 
 test_description='git commit porcelain-ish'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 commit_msg_is () {
@@ -76,7 +79,7 @@ test_expect_success 'output summary format for merges' '
 
 output_tests_cleanup() {
 	# this is needed for "do not fire editor in the presence of conflicts"
-	git checkout master &&
+	git checkout main &&
 
 	# this is needed for the "partial removal" test to pass
 	git rm file1 &&
@@ -271,6 +274,48 @@ test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on
 	test_must_be_empty actual
 '
 
+test_expect_success 'helper-editor' '
+
+	write_script lf-to-crlf.sh <<-\EOF
+	sed "s/\$/Q/" <"$1" | tr Q "\\015" >"$1".new &&
+	mv -f "$1".new "$1"
+	EOF
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, CR/LF line endings)' '
+
+	test_config core.editor "\"$PWD/lf-to-crlf.sh\"" &&
+	scissors="# ------------------------ >8 ------------------------" &&
+
+	test_write_lines >text \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" "$scissors" \
+	"# Remove this comment" "$scissors" \
+	"Remove this comment, too" &&
+
+	test_write_lines >expect \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" &&
+
+	git commit --cleanup=scissors -e -F text --allow-empty &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on first line, CR/LF line endings)' '
+
+	scissors="# ------------------------ >8 ------------------------" &&
+	test_write_lines >text \
+	"$scissors" \
+	"# Remove this comment and any following lines" &&
+	cp text /tmp/test2-text &&
+	git commit --cleanup=scissors -e -F text --allow-empty --allow-empty-message &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'cleanup commit messages (strip option,-F)' '
 
 	echo >>negative &&
@@ -440,7 +485,7 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	git add g &&
 	git commit -m "add g" &&
 	git branch second &&
-	echo master >g &&
+	echo main >g &&
 	echo g >h &&
 	git add g h &&
 	git commit -m "modify g and add h" &&
@@ -449,7 +494,7 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	git add g &&
 	git commit -m second &&
 	# Must fail due to conflict
-	test_must_fail git cherry-pick -n master &&
+	test_must_fail git cherry-pick -n main &&
 	echo "editor not started" >.git/result &&
 	(
 		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
@@ -478,9 +523,9 @@ git reset -q --hard
 
 test_expect_success 'Hand committing of a redundant merge removes dups' '
 
-	git rev-parse second master >expect &&
-	test_must_fail git merge second master &&
-	git checkout master g &&
+	git rev-parse second main >expect &&
+	test_must_fail git merge second main &&
+	git checkout main g &&
 	EDITOR=: git commit -a &&
 	git cat-file commit HEAD >raw &&
 	sed -n -e "s/^parent //p" -e "/^$/q" raw >actual &&
@@ -526,7 +571,7 @@ try_commit () {
 	GIT_EDITOR=.git/FAKE_EDITOR git commit -a $* $use_template &&
 	case "$use_template" in
 	'')
-		test_i18ngrep ! "^## Custom template" .git/COMMIT_EDITMSG ;;
+		! grep "^## Custom template" .git/COMMIT_EDITMSG ;;
 	*)
 		test_i18ngrep "^## Custom template" .git/COMMIT_EDITMSG ;;
 	esac
@@ -546,7 +591,7 @@ try_commit_status_combo () {
 
 	test_expect_success 'commit --no-status' '
 		try_commit --no-status &&
-		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit with commit.status = yes' '
@@ -558,7 +603,7 @@ try_commit_status_combo () {
 	test_expect_success 'commit with commit.status = no' '
 		test_config commit.status no &&
 		try_commit "" &&
-		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = yes' '
@@ -570,7 +615,7 @@ try_commit_status_combo () {
 	test_expect_success 'commit --no-status with commit.status = yes' '
 		test_config commit.status yes &&
 		try_commit --no-status &&
-		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 	test_expect_success 'commit --status with commit.status = no' '
@@ -582,7 +627,7 @@ try_commit_status_combo () {
 	test_expect_success 'commit --no-status with commit.status = no' '
 		test_config commit.status no &&
 		try_commit --no-status &&
-		test_i18ngrep ! "^# Changes to be committed:" .git/COMMIT_EDITMSG
+		! grep "^# Changes to be committed:" .git/COMMIT_EDITMSG
 	'
 
 }

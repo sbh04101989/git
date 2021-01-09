@@ -427,7 +427,7 @@ test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	test_path_is_file foo.idx
 '
 
-test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.threads=N warns when no pthreads' '
+test_expect_success !PTHREADS 'index-pack --threads=N or pack.threads=N warns when no pthreads' '
 	test_must_fail git index-pack --threads=2 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
@@ -445,7 +445,7 @@ test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'index-pack --threads=N or pack.th
 	grep -F "no threads support, ignoring pack.threads" err
 '
 
-test_expect_success !PTHREADS,C_LOCALE_OUTPUT 'pack-objects --threads=N or pack.threads=N warns when no pthreads' '
+test_expect_success !PTHREADS 'pack-objects --threads=N or pack.threads=N warns when no pthreads' '
 	git pack-objects --threads=2 --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
@@ -528,7 +528,7 @@ test_expect_success 'prefetch objects' '
 	TWO=$(git -C server rev-parse three_branch^) &&
 	git -C client fetch --filter=blob:none origin "$TWO" &&
 	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
-	grep "git> done" trace >donelines &&
+	grep "fetch> done" trace >donelines &&
 	test_line_count = 1 donelines
 '
 

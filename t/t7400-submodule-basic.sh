@@ -9,6 +9,9 @@ This test tries to verify basic sanity of the init, update and status
 subcommands of git submodule.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'submodule deinit works on empty repository' '
@@ -124,7 +127,7 @@ inspect() {
 }
 
 test_expect_success 'submodule add' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -158,7 +161,7 @@ test_expect_success 'redirected submodule add does not show progress' '
 	git -C addtest submodule add "file://$submodurl/parent" submod-redirected \
 		2>err &&
 	! grep % err &&
-	test_i18ngrep ! "Checking connectivity" err
+	! grep "Checking connectivity" err
 '
 
 test_expect_success 'redirected submodule add --progress does show progress' '
@@ -223,7 +226,7 @@ test_expect_success 'submodule add --branch' '
 	echo "refs/heads/initial" >expect-head &&
 	cat <<-\EOF >expect-heads &&
 	refs/heads/initial
-	refs/heads/master
+	refs/heads/main
 	EOF
 
 	(
@@ -241,7 +244,7 @@ test_expect_success 'submodule add --branch' '
 '
 
 test_expect_success 'submodule add with ./ in path' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -257,7 +260,7 @@ test_expect_success 'submodule add with ./ in path' '
 '
 
 test_expect_success 'submodule add with /././ in path' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -273,7 +276,7 @@ test_expect_success 'submodule add with /././ in path' '
 '
 
 test_expect_success 'submodule add with // in path' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -289,7 +292,7 @@ test_expect_success 'submodule add with // in path' '
 '
 
 test_expect_success 'submodule add with /.. in path' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -305,7 +308,7 @@ test_expect_success 'submodule add with /.. in path' '
 '
 
 test_expect_success 'submodule add with ./, /.. and // in path' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	(
 		cd addtest &&
@@ -335,7 +338,7 @@ test_expect_success !CYGWIN 'submodule add with \\ in path' '
 '
 
 test_expect_success 'submodule add in subdirectory' '
-	echo "refs/heads/master" >expect &&
+	echo "refs/heads/main" >expect &&
 
 	mkdir addtest/sub &&
 	(
@@ -557,7 +560,7 @@ test_expect_success 'status should be "up-to-date" after update' '
 
 test_expect_success 'checkout superproject with subproject already present' '
 	git checkout initial &&
-	git checkout master
+	git checkout main
 '
 
 test_expect_success 'apply submodule diff' '
@@ -574,7 +577,7 @@ test_expect_success 'apply submodule diff' '
 	git checkout second &&
 	git apply --index P.diff &&
 
-	git diff --cached master >staged &&
+	git diff --cached main >staged &&
 	test_must_be_empty staged
 '
 
@@ -1101,7 +1104,7 @@ test_expect_success 'submodule deinit deinits a submodule when its work tree is 
 	git submodule deinit init example2 >actual &&
 	test -z "$(git config --get-regexp "submodule\.example\.")" &&
 	test -z "$(git config --get-regexp "submodule\.example2\.")" &&
-	test_i18ngrep ! "Cleared directory .init" actual &&
+	! grep "Cleared directory .init" actual &&
 	test_i18ngrep "Cleared directory .example2" actual &&
 	rmdir init
 '
@@ -1151,19 +1154,19 @@ test_expect_success 'submodule deinit is silent when used on an uninitialized su
 	test_i18ngrep "Submodule .example. (.*) unregistered for path .init" actual &&
 	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit init >actual &&
-	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	! grep "Submodule .example. (.*) unregistered for path .init" actual &&
 	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit . >actual &&
-	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
+	! grep "Submodule .example. (.*) unregistered for path .init" actual &&
 	test_i18ngrep "Submodule .example2. (.*) unregistered for path .example2" actual &&
 	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit . >actual &&
-	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
-	test_i18ngrep ! "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	! grep "Submodule .example. (.*) unregistered for path .init" actual &&
+	! grep "Submodule .example2. (.*) unregistered for path .example2" actual &&
 	test_i18ngrep "Cleared directory .init" actual &&
 	git submodule deinit --all >actual &&
-	test_i18ngrep ! "Submodule .example. (.*) unregistered for path .init" actual &&
-	test_i18ngrep ! "Submodule .example2. (.*) unregistered for path .example2" actual &&
+	! grep "Submodule .example. (.*) unregistered for path .init" actual &&
+	! grep "Submodule .example2. (.*) unregistered for path .example2" actual &&
 	test_i18ngrep "Cleared directory .init" actual &&
 	rmdir init example2
 '

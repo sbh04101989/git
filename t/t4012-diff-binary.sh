@@ -19,7 +19,7 @@ test_expect_success 'prepare repository' '
 	echo AIT >a && echo BIT >b && echo CIT >c && echo DIT >d &&
 	git update-index --add a b c d &&
 	echo git >a &&
-	cat "$TEST_DIRECTORY"/test-binary-1.png >b &&
+	cat "$TEST_DIRECTORY"/diff-lib/test-binary-1.png >b &&
 	echo git >c &&
 	cat b b >d
 '
@@ -63,7 +63,7 @@ test_expect_success 'apply --numstat understands diff --binary format' '
 
 # apply needs to be able to skip the binary material correctly
 # in order to report the line number of a corrupt patch.
-test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
+test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff >output &&
 	sed -e "s/-CIT/xCIT/" <output >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
@@ -73,7 +73,7 @@ test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
 	test "$detected" = xCIT
 '
 
-test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
+test_expect_success 'apply detecting corrupt patch correctly' '
 	git diff --binary | sed -e "s/-CIT/xCIT/" >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
 	detected=$(cat detected) &&
